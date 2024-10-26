@@ -5,7 +5,10 @@ const int maxn = 1e4 + 10;
 int f[maxn];
 
 int find(int x) {
-    return x == f[x] ? x : f[x] = find(f[x]);
+    while (f[x] != x) {
+        x = f[x];
+    }
+    return x;
 }
 
 void merge(int x, int y) {

@@ -1,25 +1,29 @@
 #include <iostream>
 using namespace std;
 
+#define l(index) (index * 2)
+#define r(index) (index * 2 + 1)
+
 const int maxn = 1e5 + 10;
 int a[maxn];
 
 struct Node {
-    int l ,r, sum, tag;
+    int l ,r;
+    long long sum, tag;
 } tree[4 * maxn];
 
 void up(int node) {
-    tree[node].sum = tree[node * 2].sum + tree[node * 2 + 1].sum;
+    tree[node].sum = tree[l(node)].sum + tree[r(node)].sum;
 }
 
 void down(int node) {
     if (tree[node].tag == 0) {
         return;
     }
-    tree[node * 2].tag += tree[node].tag;
-    tree[node * 2 + 1].tag += tree[node].tag;
-    tree[node * 2].sum += (tree[node * 2].r - tree[node * 2].l + 1) * tree[node].tag;
-    tree[node * 2 + 1].sum += (tree[node * 2 + 1].r - tree[node * 2 + 1].l + 1) * tree[node].tag;
+    tree[l(node)].tag += tree[node].tag;
+    tree[r(node)].tag += tree[node].tag;
+    tree[l(node)].sum += (tree[l(node)].r - tree[l(node)].l + 1) * tree[node].tag;
+    tree[r(node)].sum += (tree[r(node)].r - tree[r(node)].l + 1) * tree[node].tag;
     tree[node].tag = 0;
 }
 
@@ -31,40 +35,41 @@ void build(int node, int left, int right) {
         return;
     }
     int mid = (left + right) >> 1;
-    build(node * 2, left, mid);
-    build(node * 2 + 1, mid + 1, right);
+    build(l(node), left, mid);
+    build(r(node), mid + 1, right);
     up(node);
 }
 
-int query(int node, int left, int right, int start, int end) {
+long long query(int node, int left, int right, int start, int end) {
     if (left >= start && right <= end) {
         return tree[node].sum;
     }
     int mid = (left + right) >> 1;
     down(node);
-    int sum = 0;
+    long long sum = 0;
     if (start <= mid) {
-        sum += query(node * 2, left, mid, start, end);
+        sum += query(l(node), left, mid, start, end);
     }
     if (end > mid) {
-        sum += query(node * 2 + 1, mid + 1, right, start, end);
+        sum += query(r(node), mid + 1, right, start, end);
     }
     return sum;
 }
 
 void update(int node, int left, int right, int x, int y, int k) {
-    if (x >= left && y <= right) {
+    // 要修改的范围完全包括了节点的范围，加一个懒标记，不再更新
+    if (x <= left && y >= right) {
         tree[node].tag += k;
-        tree[node].sum += (y - x + 1) * k;
+        tree[node].sum += (right - left + 1) * k;
         return;
     }
     int mid = (left + right) >> 1;
     down(node);
     if (x <= mid) {
-        update(node * 2, left, mid, x, y, k);
+        update(l(node), left, mid, x, y, k);
     }
     if (y > mid) {
-        update(node * 2 + 1, mid + 1, right, x, y, k);
+        update(r(node), mid + 1, right, x, y, k);
     }
     up(node);
 }
